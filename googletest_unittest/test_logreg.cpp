@@ -1,31 +1,44 @@
 #include <gtest/gtest.h>
-#include "LogReg/LogReg.hpp"  // 根據你專案裡的實際路徑調整
+#include "LogReg/LogReg.hpp"
 
-// 測試資料：AND Gate
+// Helper：从概率转离散预测
+static std::vector<int> toLabels(const std::vector<double>& probs, double thresh = 0.5) {
+    std::vector<int> labels;
+    labels.reserve(probs.size());
+    for (double p : probs) labels.push_back(p >= thresh ? 1 : 0);
+    return labels;
+}
+
+// 基础测试：AND 门
 TEST(LogRegBasic, AndGate) {
     std::vector<std::vector<double>> X = {
         {0,0}, {0,1}, {1,0}, {1,1}
     };
     std::vector<double> y = {0, 0, 0, 1};
 
-    MLPP::LogReg clf;
-    clf.setLearningRate(0.1);
-    clf.fit(X, y, /*max_iters=*/1000);
+    // 1) 用带数据的构造器创建模型
+    MLPP::LogReg clf(X, y, "None", /*lambda=*/0.0, /*alpha=*/0.0);
 
-    auto probs = clf.predictProb(X);
+    // 2) 训练模型
+    clf.gradientDescent(/*learning_rate=*/0.1, /*max_epoch=*/200, /*UI=*/false);
+
+    // 3) 获取概率并转离散预测
+    auto probs = clf.modelSetTest(X);
     ASSERT_EQ(probs.size(), y.size());
+    for (double p : probs) {
+        EXPECT_GE(p, 0.0);
+        EXPECT_LE(p, 1.0);
+    }
+    auto preds = toLabels(probs);
 
-    auto preds = clf.predict(X);
+    // 4) 验证预测结果
     for (size_t i = 0; i < y.size(); ++i) {
         EXPECT_EQ(preds[i], static_cast<int>(y[i]))
-            << "at sample " << i;
-        // 同時檢查機率分佈
-        EXPECT_GE(probs[i], 0.0);
-        EXPECT_LE(probs[i], 1.0);
+            << "Sample " << i << " failed";
     }
 }
 
-// Fixture：測試不同正則化強度
+// 参数化测试：不同正则化强度下的准确率
 class LogRegRegTest : public ::testing::TestWithParam<double> {
 protected:
     void SetUp() override {
@@ -39,24 +52,18 @@ protected:
     std::vector<double> y;
 };
 
-TEST_P(LogRegRegTest, Regularization) {
+TEST_P(LogRegRegTest, RegularizationImpact) {
     double lambda = GetParam();
-    MLPP::LogReg clf;
-    clf.setLearningRate(0.05);
-    clf.setRegularization(lambda);
-    clf.fit(X, y, 500);
+    MLPP::LogReg clf(X, y, "L2", /*lambda=*/lambda, /*alpha=*/0.0);
+    clf.gradientDescent(/*learning_rate=*/0.05, /*max_epoch=*/500, /*UI=*/false);
 
-    // 檢查非負權重範圍及分類準確度
-    auto preds = clf.predict(X);
-    int correct = 0;
-    for (size_t i = 0; i < y.size(); ++i) {
-        if (preds[i] == static_cast<int>(y[i])) correct++;
-    }
-    EXPECT_GE(correct, 6) << "至少 75% 正確率";
+    // 评估整体准确率
+    double acc = clf.score();
+    EXPECT_GE(acc, 0.75) << "Lambda=" << lambda << " yielded low accuracy";
 }
 
 INSTANTIATE_TEST_SUITE_P(
-    RegStrength,
+    RegStrengths,
     LogRegRegTest,
     ::testing::Values(0.0, 0.1, 1.0)
 );
