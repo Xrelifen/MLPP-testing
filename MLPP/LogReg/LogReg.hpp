@@ -25,6 +25,11 @@ namespace MLPP {
             void MBGD(double learning_rate, int max_epoch, int mini_batch_size, bool UI = 1);
             double score();
             void save(std::string fileName);
+            
+            /* add for test*/
+            const std::vector<double>& getWeights() const { return weights; }
+            double getBias() const { return bias; }
+            /* add for test*/
         private:
 
             double Cost(std::vector <double> y_hat, std::vector<double> y);

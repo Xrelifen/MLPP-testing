@@ -15,6 +15,7 @@
 #include <cmath>
 #include <random>
 
+/*
 namespace MLPP{
 
     LinReg::LinReg(std::vector<std::vector<double>> inputSet, std::vector<double> outputSet, std::string reg, double lambda, double alpha)
@@ -231,3 +232,169 @@ namespace MLPP{
         y_hat = Evaluate(inputSet);
     }
 }
+*/
+
+
+namespace MLPP{
+
+    LinReg::LinReg(std::vector<std::vector<double>> inputSet, std::vector<double> outputSet, std::string reg, double lambda, double alpha)
+    : inputSet(inputSet), outputSet(outputSet), n(inputSet.size()), k(inputSet[0].size()), reg(reg), lambda(lambda), alpha(alpha)
+    {
+        y_hat.resize(n);
+        weights = Utilities::weightInitialization(k);
+        bias = Utilities::biasInitialization();
+    }
+
+    std::vector<double> LinReg::modelSetTest(std::vector<std::vector<double>> X){
+        return Evaluate(X);
+    }
+
+    double LinReg::modelTest(std::vector<double> x){
+        return Evaluate(x);
+    }
+
+    void LinReg::NewtonRaphson(double learning_rate, int max_epoch, bool UI){
+        LinAlg alg;
+        Reg regularization;
+        double cost_prev = 0;
+        int epoch = 1;
+        forwardPass();   
+        while(true){
+            cost_prev = Cost(y_hat, outputSet);
+            std::vector<double> error = alg.subtraction(y_hat, outputSet);
+
+            std::vector<double> first_derivative = alg.mat_vec_mult(alg.transpose(inputSet), error);
+            std::vector<std::vector<double>> second_derivative = alg.matmult(alg.transpose(inputSet), inputSet);
+            weights = alg.subtraction(weights, alg.scalarMultiply(learning_rate/n, alg.mat_vec_mult(alg.transpose(alg.inverse(second_derivative)), first_derivative)));
+            weights = regularization.regWeights(weights, lambda, alpha, reg);
+            bias -= learning_rate * alg.sum_elements(error) / n;
+            forwardPass();
+            if(UI) { 
+                Utilities::CostInfo(epoch, cost_prev, Cost(y_hat, outputSet));
+                Utilities::UI(weights, bias); 
+            }
+            if(++epoch > max_epoch) break;
+        }
+    }
+
+    void LinReg::gradientDescent(double learning_rate, int max_epoch, bool UI){
+        LinAlg alg;
+        Reg regularization;
+        double cost_prev = 0;
+        int epoch = 1;
+        forwardPass();
+        while(true){
+            cost_prev = Cost(y_hat, outputSet);
+            std::vector<double> error = alg.subtraction(y_hat, outputSet);
+            weights = alg.subtraction(weights, alg.scalarMultiply(learning_rate/n, alg.mat_vec_mult(alg.transpose(inputSet), error)));
+            weights = regularization.regWeights(weights, lambda, alpha, reg);
+            bias -= learning_rate * alg.sum_elements(error) / n;
+            forwardPass();
+            if(UI) { 
+                Utilities::CostInfo(epoch, cost_prev, Cost(y_hat, outputSet));
+                Utilities::UI(weights, bias); 
+            }
+            if(++epoch > max_epoch) break;
+        }
+    }
+
+    void LinReg::SGD(double learning_rate, int max_epoch, bool UI){
+        LinAlg alg;
+        Reg regularization;
+        int epoch = 1;
+        while(true){
+            std::random_device rd;
+            std::default_random_engine gen(rd());
+            std::uniform_int_distribution<int> dist(0, n - 1);
+            int idx = dist(gen);
+            double pred = Evaluate(inputSet[idx]);
+            double error = pred - outputSet[idx];
+            weights = alg.subtraction(weights, alg.scalarMultiply(learning_rate * error, inputSet[idx]));
+            weights = regularization.regWeights(weights, lambda, alpha, reg);
+            bias -= learning_rate * error;
+            if(UI) {
+                double cost = Cost({pred}, {outputSet[idx]});
+                Utilities::CostInfo(epoch, cost, cost);
+                Utilities::UI(weights, bias);
+            }
+            if(++epoch > max_epoch) break;
+        }
+        forwardPass();
+    }
+
+    void LinReg::MBGD(double learning_rate, int max_epoch, int mini_batch_size, bool UI){
+        LinAlg alg;
+        Reg regularization;
+        int epoch = 1;
+        int n_batches = n / mini_batch_size;
+        auto [Xbatches, ybatches] = Utilities::createMiniBatches(inputSet, outputSet, n_batches);
+        while(true){
+            for(int i = 0; i < n_batches; ++i){
+                auto preds = Evaluate(Xbatches[i]);
+                std::vector<double> error = alg.subtraction(preds, ybatches[i]);
+                weights = alg.subtraction(weights, alg.scalarMultiply(learning_rate / ybatches[i].size(), alg.mat_vec_mult(alg.transpose(Xbatches[i]), error)));
+                weights = regularization.regWeights(weights, lambda, alpha, reg);
+                bias -= learning_rate * alg.sum_elements(error) / ybatches[i].size();
+            }
+            if(++epoch > max_epoch) break;
+        }
+        forwardPass();
+    }
+
+    void LinReg::normalEquation(){
+        if(n <= k){
+            std::cout << "ERR 99: Resulting matrix was noninvertible/degenerate, and so the normal equation could not be performed. Try utilizing gradient descent." << std::endl;
+            return;
+        }
+        LinAlg alg;
+        std::vector<std::vector<double>> X_aug(n, std::vector<double>(k + 1));
+        for(int i = 0; i < n; ++i){
+            X_aug[i][0] = 1.0;
+            for(int j = 0; j < k; ++j)
+                X_aug[i][j + 1] = inputSet[i][j];
+        }
+        auto Xt = alg.transpose(X_aug);
+        auto XtX = alg.matmult(Xt, X_aug);
+        std::vector<double> theta = alg.mat_vec_mult(alg.inverse(XtX), alg.mat_vec_mult(Xt, outputSet));
+        if(std::isnan(theta[0])){
+            std::cout << "ERR 99: Resulting matrix was noninvertible/degenerate, and so the normal equation could not be performed. Try utilizing gradient descent." << std::endl;
+            return;
+        }
+        bias = theta[0];
+        weights.resize(k);
+        for(int j = 0; j < k; ++j)
+            weights[j] = theta[j + 1];
+        forwardPass();
+    }
+
+    double LinReg::score(){
+        Utilities util;
+        return util.performance(y_hat, outputSet);
+    }
+
+    void LinReg::save(std::string fileName){
+         Utilities util;
+         util.saveParameters(fileName, weights, bias);
+    }
+
+    double LinReg::Cost(std::vector<double> yh, std::vector<double> y){
+        Reg regularization;
+        ::MLPP::Cost cost_fn;
+        return cost_fn.MSE(yh, y) + regularization.regTerm(weights, lambda, alpha, reg);
+    }
+
+    std::vector<double> LinReg::Evaluate(std::vector<std::vector<double>> X){
+        LinAlg alg;
+        return alg.scalarAdd(bias, alg.mat_vec_mult(X, weights)); 
+    }
+
+    double LinReg::Evaluate(std::vector<double> x){
+        LinAlg alg;
+        return alg.dot(weights, x) + bias;
+    }
+
+    void LinReg::forwardPass(){
+        y_hat = Evaluate(inputSet);
+    }
+
+} 
