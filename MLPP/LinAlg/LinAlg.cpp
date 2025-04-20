@@ -17,13 +17,23 @@ namespace MLPP{
         return matmult(transpose(A), A); // AtA
     }
 
-    bool LinAlg::linearIndependenceChecker(std::vector<std::vector<double>> A){
+    /*bool LinAlg::linearIndependenceChecker(std::vector<std::vector<double>> A){
         if (det(gramMatrix(A), A.size()) == 0){
             return false; 
         }
         return true; 
+    }*/
+    bool LinAlg::linearIndependenceChecker(std::vector<std::vector<double>> A) {
+        // compute the Gram matrix G = Aᵀ A
+        auto G = gramMatrix(A);
+    
+        // use G.size() (its dimension) rather than A.size()
+        int k = static_cast<int>(G.size());
+        double determinant = det(G, k);
+    
+        return determinant != 0.0;
     }
-
+    
     std::vector<std::vector<double>> LinAlg::gaussianNoise(int n, int m){
         std::random_device rd;
         std::default_random_engine generator(rd());
@@ -279,6 +289,7 @@ namespace MLPP{
         return B;
     }
 
+    /*
     double LinAlg::det(std::vector<std::vector<double>> A, int d){
 
         double deter = 0;
@@ -288,9 +299,42 @@ namespace MLPP{
             B[i].resize(d);
         }
 
-        /* This is the base case in which the input is a 2x2 square matrix.
-        Recursion is performed unless and until we reach this base case,
-        such that we recieve a scalar as the result. */
+        if(d == 2){
+            return A[0][0] * A[1][1] - A[0][1] * A[1][0];
+        }
+
+        else{
+            for(int i = 0; i < d; i++){
+                int sub_i = 0;
+                for(int j = 1; j < d; j++){
+                    int sub_j = 0;
+                    for(int k = 0; k < d; k++){
+                        if(k == i){
+                            continue;
+                        }
+                        B[sub_i][sub_j] = A[j][k];
+                        sub_j++;
+                    }
+                    sub_i++;
+                }
+                deter += std::pow(-1, i) * A[0][i] * det(B, d-1);
+            }
+        }
+        return deter;
+    }*/
+    double LinAlg::det(std::vector<std::vector<double>> A, int d){
+
+        double deter = 0;
+        std::vector<std::vector<double>> B;
+        B.resize(d);
+        for(int i = 0; i < d; i++){
+            B[i].resize(d);
+        }
+
+        if (d == 1) {
+            // 1×1 determinant is just the single entry
+            return A[0][0];
+        }
         if(d == 2){
             return A[0][0] * A[1][1] - A[0][1] * A[1][0];
         }
