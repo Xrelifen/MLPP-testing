@@ -11,4 +11,7 @@ Machine learning is a vast and exiciting discipline, garnering attention from sp
 - We do AFL test and Google test for this project.
     
 ## Citations
-Various different materials helped me along the way of creating ML++, and I would like to give credit to several of them here. [This](https://www.tutorialspoint.com/cplusplus-program-to-compute-determinant-of-a-matrix) article by TutorialsPoint was a big help when trying to implement the determinant of a matrix, and [this](https://www.geeksforgeeks.org/adjoint-inverse-matrix/) article by GeeksForGeeks was very helpful when trying to take the adjoint and inverse of a matrix.
+Various different materials helped me along the way of creating ML++ testing.
+ - (MLPP)[https://github.com/novak-99/MLPP]
+ - (Google test)[https://github.com/google/googletest]
+ - (AFL)[https://github.com/google/AFL]
