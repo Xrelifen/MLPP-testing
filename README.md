@@ -18,6 +18,6 @@ Machine learning is a vast and exiciting discipline, garnering attention from sp
             - The PseudoinverseRectangular failure is due to det not having a special case for 1×1 matrices, so it returns zero, leading to a division by zero and NaNs.
 ## Citations
 Various different materials helped me along the way of creating ML++ testing.
- - (MLPP)[https://github.com/novak-99/MLPP]
- - (Google test)[https://github.com/google/googletest]
- - (AFL)[https://github.com/google/AFL]
+ - [MLPP](https://github.com/novak-99/MLPP)
+ - [Google test](https://github.com/google/googletest)
+ - [AFL](https://github.com/google/AFL)
