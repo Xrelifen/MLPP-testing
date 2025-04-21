@@ -16,6 +16,15 @@ Machine learning is a vast and exiciting discipline, garnering attention from sp
         - LinAlg Error:
             - The LinearIndependenceNoCrash3x2 crash happens because the code uses the number of rows (A.size()) instead of the Gram matrix’s dimension when calling det, which goes out‑of‑bounds whenever rows > columns.
             - The PseudoinverseRectangular failure is due to det not having a special case for 1×1 matrices, so it returns zero, leading to a division by zero and NaNs.
+        - Regularization Error:
+            - The error was that calling the bare abs() invoked the integer overload (truncating your double weights to int before taking the absolute value), so fractional weights became zero and your Lasso/ElasticNet sums were wrong until you switched to std::abs(double) by including <cmath>.
+        - Cost Error:
+            - The MSE bug came from writing sum / 2 * size instead of sum / (2 * size) (so you were multiplying instead of dividing by the sample count)
+            - The MAE derivative was wrong because it took the sign of y_hat instead of the sign of y_hat - y.
+        - Utilities:
+            - TP, FP, and TN were never initialized (only FN was), so they started with garbage values and made all of the counts—and thus your precision/recall/accuracy/F1—come out wrong.
+        - UniLinReg:
+            - Never handled the zero‐variance case in x, your slope formula ended up dividing by zero (for a single point or identical inputs), producing NaN until you added the check to set b₁=0 and b₀=mean(y).
 ## Citations
 Various different materials helped me along the way of creating ML++ testing.
  - [MLPP](https://github.com/novak-99/MLPP)
