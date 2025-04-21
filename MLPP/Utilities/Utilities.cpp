@@ -355,7 +355,9 @@ namespace MLPP{
     }
 
     std::tuple<double, double, double, double> Utilities::TF_PN(std::vector<double> y_hat, std::vector<double> y){
-        double TP, FP, TN, FN = 0;
+        //revise
+        double TP = 0, FP = 0, TN = 0, FN = 0;
+        //double TP, FP, TN, FN = 0;
         for(int i = 0; i < y_hat.size(); i++){
             if(y_hat[i] == y[i]){
                 if(y_hat[i] == 1){

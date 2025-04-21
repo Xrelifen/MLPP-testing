@@ -16,7 +16,9 @@ namespace MLPP{
         for(int i = 0; i < y_hat.size(); i++){
             sum += (y_hat[i] - y[i]) * (y_hat[i] - y[i]);
         }
-        return sum / 2 * y_hat.size();
+        // Revise
+        return sum / (2 * y_hat.size());
+        //return sum / 2 * y_hat.size();
     }
 
     double Cost::MSE(std::vector<std::vector<double>> y_hat, std::vector<std::vector<double>> y){
@@ -26,7 +28,9 @@ namespace MLPP{
                 sum += (y_hat[i][j] - y[i][j]) * (y_hat[i][j] - y[i][j]);
             }
         }
-        return sum / 2 * y_hat.size();
+        // Revise
+        return sum / (2 * y_hat.size());
+        //return sum / 2 * y_hat.size();
     }
 
     std::vector<double> Cost::MSEDeriv(std::vector <double> y_hat, std::vector<double> y){
@@ -85,6 +89,7 @@ namespace MLPP{
         return sum / y_hat.size();
     }
 
+    /*
     std::vector<double> Cost::MAEDeriv(std::vector <double> y_hat, std::vector <double> y){
         std::vector<double> deriv; 
         deriv.resize(y_hat.size());
@@ -125,6 +130,35 @@ namespace MLPP{
         }
         return deriv;
     }
+    */
+    
+    std::vector<double> Cost::MAEDeriv(const std::vector<double> y_hat, const std::vector<double> y){
+        std::vector<double> deriv(y_hat.size());
+
+        for (size_t i = 0; i < y_hat.size(); ++i) {
+            double diff = y_hat[i] - y[i];          
+            if      (diff < 0)  deriv[i] = -1.0;
+            else if (diff > 0)  deriv[i] =  1.0;
+            else                deriv[i] =  0.0;
+        }
+        return deriv;
+    }
+
+    std::vector<std::vector<double>> Cost::MAEDeriv(const std::vector<std::vector<double>> y_hat, const std::vector<std::vector<double>> y){
+        std::vector<std::vector<double>> deriv(y_hat.size());
+
+        for (size_t i = 0; i < y_hat.size(); ++i) {
+            deriv[i].resize(y_hat[i].size());
+            for (size_t j = 0; j < y_hat[i].size(); ++j) {
+                double diff = y_hat[i][j] - y[i][j];
+                if      (diff < 0)  deriv[i][j] = -1.0;
+                else if (diff > 0)  deriv[i][j] =  1.0;
+                else                deriv[i][j] =  0.0;
+            }
+        }
+        return deriv;
+    }
+    
 
     double Cost::MBE(std::vector <double> y_hat, std::vector<double> y){
         double sum = 0;

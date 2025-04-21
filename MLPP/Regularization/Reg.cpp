@@ -10,6 +10,9 @@
 #include "LinAlg/LinAlg.hpp"
 #include "Activation/Activation.hpp"
 
+// Revise
+#include <cmath> 
+
 namespace MLPP{
 
     double Reg::regTerm(std::vector<double> weights, double lambda, double alpha, std::string reg){
@@ -23,14 +26,18 @@ namespace MLPP{
         else if(reg == "Lasso"){
             double reg = 0;
             for(int i = 0; i < weights.size(); i++){
-                reg += abs(weights[i]);
+                // Revise
+                reg += std::abs(weights[i]);
+                //reg += abs(weights[i]);
             }
             return reg * lambda;
         }
         else if(reg == "ElasticNet"){
             double reg = 0;
             for(int i = 0; i < weights.size(); i++){
-                reg += alpha * abs(weights[i]); // Lasso Reg
+                // Revise
+                reg += alpha * std::abs(weights[i]); // Lasso Reg
+                //reg += alpha * abs(weights[i]); // Lasso Reg
                 reg += ((1 - alpha) / 2) * weights[i] * weights[i]; // Ridge Reg
             }
             return reg * lambda;
