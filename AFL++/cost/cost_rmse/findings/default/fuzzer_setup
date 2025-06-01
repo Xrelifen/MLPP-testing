@@ -1,0 +1,6 @@
+# environment variables:
+AFL_CUSTOM_INFO_PROGRAM=./fuzz_rmse
+AFL_CUSTOM_INFO_PROGRAM_ARGV=
+AFL_CUSTOM_INFO_OUT=findings/default
+# command line:
+'afl-fuzz' '-i' 'seeds_rmse' '-o' 'findings' '-D' '-V' '10800' '--' './fuzz_rmse'
